@@ -1,54 +1,64 @@
-# UniFi G4 Doorbell Pro: advanced control notes and seasonal shows
+# UniFi G4 Doorbell Pro: explore it, change it
 
-Notes on getting a shell on a UniFi G4 Doorbell Pro, what runs inside it, and how to drive its button ring, spotlight, screen and ring tone. The first thing built on that knowledge is a one-night Halloween show that coordinates the doorbell, four LIFX bulbs and Home Assistant. The research is the more reusable part, and most of this repository is about it.
+The G4 Doorbell Pro has a color screen, a lit button ring, a spotlight, a speaker and a small computer inside. Ubiquiti's app only lets you change a few of those things. This repository shows how to get a shell on the doorbell, what is inside, and how to make it do things it does not do stock, with commands that have been run on a real unit and notes on what went wrong.
 
-Everything was learned on one doorbell (board G4R, system ID 0xa574, firmware 5.5.45) behind a UniFi Protect NVR, on 2026-10-31. Other firmware versions and the PoE model (0xa575) will differ. Changes can interrupt recording and, in the worst case, leave the device needing a recovery procedure. The license disclaims any warranty.
+![The Halloween welcome screen on the doorbell's 240 by 240 display](examples/halloween-2026/assets/welcome.gif)
+
+The picture above is the doorbell's own welcome screen, replaced with a custom animation. It comes from [the worked example](examples/halloween-2026/README.md): a one-night Halloween show that coordinated the doorbell, four lights and Home Assistant.
+
+## What you can do with it
+
+| You can | How hard | Details |
+|---|---|---|
+| Turn on SSH, which Ubiquiti leaves off | medium | [getting SSH access](docs/getting-started/getting-ssh-access.md) |
+| Change the button ring's color, or make it pulse | easy | [quick start](docs/how-to/quick-start.md) |
+| Turn the spotlight on and off from a script | easy | [quick start](docs/how-to/quick-start.md) |
+| Show your own picture or animation on the screen | medium | [recipes](docs/how-to/recipes.md) |
+| Play your own sound when someone presses the button | medium | [recipes](docs/how-to/recipes.md) |
+| Keep the screen on instead of letting it go dark | medium | [recipes](docs/how-to/recipes.md) |
+| Run your own scripts, started from Home Assistant or your computer | medium | [running your own scripts](docs/how-to/running-custom-scripts.md) |
+| Read the light sensor and the doorbell's own log | easy | [recipes](docs/how-to/recipes.md) |
+
+Not working yet: lighting single LEDs in the ring (it takes one color for the whole ring), playing a sound file from the shell, and anything that runs by itself after a reboot. [Verified controls](docs/reference/verified-controls.md) lists the details.
+
+## Before you start
+
+- This was learned on one doorbell: board G4R, system ID `0xa574`, firmware 5.5.45, behind a UniFi Protect NVR. Other firmware versions and the PoE model differ.
+- You need to be comfortable pasting commands into a terminal. Every command has an undo next to it.
+- Nothing here changes recording, notifications or the indoor chime. Changes that go wrong can still interrupt recording or need a recovery procedure. The [undo page](docs/how-to/undo-and-recovery.md) lists what to do.
+- This project is not made by or affiliated with Ubiquiti. You use it at your own risk; the [license](LICENSE) says so.
 
 ## Where to start
 
-| If you want | Read |
+| Your goal | Start here |
 |---|---|
-| a shell on the doorbell | [getting SSH access](docs/getting-ssh-access-to-the-doorbell.md) |
-| to see what runs on it and how it boots | [system map](docs/system-map.md) |
-| to know what survives a reboot and what can be modified | [filesystem and persistence](docs/filesystem-and-persistence.md) |
-| the chips, buses and sysfs interfaces | [hardware map](docs/hardware-map.md) |
-| to send commands to its services | [IPC and services](docs/ipc-and-services.md) |
-| ring, screen and sound recipes | [LED, sound and screen control](docs/led-sound-and-screen-control.md) |
-| what is verified for the ring, spotlight, screen and ring tone | [control reference](docs/g4-doorbell-pro-control-reference.md) |
-| habits for exploring without disturbing the device | [exploring safely](docs/exploring-the-doorbell-safely.md) |
-| what broke while building the Halloween show | [build and review](docs/halloween-2026-build-and-review.md) |
-| the Halloween show itself | [halloween-2026/README.md](halloween-2026/README.md) |
+| I just want to try it | [getting SSH access](docs/getting-started/getting-ssh-access.md), then the [quick start](docs/how-to/quick-start.md) |
+| I want to build something | [running your own scripts](docs/how-to/running-custom-scripts.md), [recipes](docs/how-to/recipes.md) and the [Halloween example](examples/halloween-2026/README.md) |
+| I want to know how it works | the [documentation index](docs/README.md) and the [glossary](docs/glossary.md) |
+| I use an AI coding assistant | point it at [AGENTS.md](AGENTS.md) first |
 
-Each claim in the docs carries a label: run (executed here), seen (a person watched or listened), logged (shown by a log or readback), strings (read from the firmware binaries), or stock script (read in the firmware's own scripts, not run).
-
-## Layout
+## What is in the repository
 
 ```
-docs/                          the research, plus data/ with message, state and screen names
-halloween-2026/
-  SPEC.md                      the request as given
-  README.md                    status, how it runs, how to restore by hand
-  homeassistant/               the Home Assistant package
-  doorbell/                    halloween.sh (runs on the doorbell), make_sounds.py
-  assets/ anim/ sounds/        artwork frames, built sprites, built sounds
-  backups/                     how to save the doorbell's stock files (the files stay local)
-  docs/                        the earlier plan
+docs/
+  getting-started/     SSH access, exploring without slowing the doorbell down
+  how-to/              quick start, recipes, custom scripts, undo and recovery
+  reference/           how the doorbell works: processes, flash, chips, messages, controls
+  glossary.md
+tools/                 small scripts: copy files off, install a key, bounded-effect template
+examples/
+  halloween-2026/      a full show built from all of the above
+AGENTS.md              rules and facts for AI assistants
 ```
 
-Seasons are folders named `<holiday>-<year>`: self-contained, off until one toggle is on, expiring by date, restoring from a snapshot. Start another by copying the last one.
+## How claims are labeled
 
-## What a season needs
-
-- a UniFi Protect NVR with a G4 Doorbell Pro and SSH access to it
-- Home Assistant with the UniFi Protect, LIFX and `shell_command` integrations, and an SSH key Home Assistant can use against the doorbell
-- Python 3 with numpy, and ffmpeg, on the machine that builds the sounds
+Reference pages mark how each claim was checked: run (executed on a real doorbell), seen (a person watched or listened), logged (shown by the log), strings (read from the firmware, not tried) or stock script (read in Ubiquiti's own scripts, not run). A claim labeled only "strings" or "stock script" is a lead, not a result.
 
 ## Not in the repository
 
-The Ubiquiti binaries used to read message names (`ubnt_sounds_leds`, `ubnt_lcm_gui` and the others) are not committed; copy them from `/bin` on your own doorbell. Backups of the doorbell's files and SSH key lines stay local, because they hold Ubiquiti assets and key material. WAV files are regenerated by `make_sounds.py`. The firmware's stock scripts are described and quoted in short pieces, not copied.
-
-Addresses in the code and docs are placeholders: `DOORBELL_IP`, `HOME_ASSISTANT_HOST` and, in the SSH guide, `UDM_IP`.
+Ubiquiti's programs, sounds and images are not here, and neither are backups of anyone's doorbell. The scripts and docs use placeholders for addresses: `DOORBELL_IP`, `HOME_ASSISTANT_HOST` and `UDM_IP`.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). It covers the code, docs and the artwork and sounds in this repository. Ubiquiti's firmware, sounds and images are not included and are not covered.
+MIT, see [LICENSE](LICENSE). It covers the code, docs and the artwork and sounds in this repository.

@@ -1,5 +1,7 @@
 # System map: processes, boot, network
 
+In short: the doorbell is a small Linux computer that is already working hard. This page lists its parts, how it starts up and which programs run, so you know what you are sharing resources with.
+
 What runs on a UniFi G4 Doorbell Pro (board G4R, system ID 0xa574, firmware 5.5.45) and how it starts. Surveyed on 2026-10-31 with read-only commands over SSH. Evidence labels used across these docs:
 
 - run: executed during this project and the result observed
@@ -27,7 +29,7 @@ The CPU is close to saturated during normal operation. One `top` snapshot: 48% u
 
 Two consequences for anyone modifying the doorbell:
 
-- A recursive `grep` over the filesystem ran past 90 seconds, and the load average read 8.4 while it ran, against 6.4 a few minutes before. Search copies of the files on another machine instead (see [exploring the doorbell safely](exploring-the-doorbell-safely.md)).
+- A recursive `grep` over the filesystem ran past 90 seconds, and the load average read 8.4 while it ran, against 6.4 a few minutes before. Search copies of the files on another machine instead (see [exploring the doorbell safely](../getting-started/exploring-safely.md)).
 - A shell loop that reads the whole log every few seconds is not free. `logread` held about 1.1 MB, and ten reads with `grep` took 4 seconds of wall time on the saturated CPU. A `logread -f` stream avoids rereading the buffer.
 
 ## Flash layout
@@ -96,7 +98,7 @@ The binaries live in `/bin` (also reachable as `/usr/bin`). Several `ubnt_*` nam
 
 | Port | Service | Notes |
 |---|---|---|
-| TCP 22 | Dropbear | closed until Protect's SSH setting is on; see [getting SSH access](getting-ssh-access-to-the-doorbell.md) |
+| TCP 22 | Dropbear | closed until Protect's SSH setting is on; see [getting SSH access](../getting-started/getting-ssh-access.md) |
 | TCP 80, 443 | lighttpd | `/api/*` is rewritten to `rest.cgi` (`ubnt_cgi`); snapshots at `/snap.jpeg` and numbered variants go through an auth module; `/teleport/ws` proxies to a local service on 7447 |
 | UDP 7004 | `ubnt_talkback` | two-way audio |
 | UDP 10001 | `infctld` | device discovery |

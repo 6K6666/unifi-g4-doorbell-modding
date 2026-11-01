@@ -1,5 +1,7 @@
 # Getting SSH access to the doorbell
 
+Risk: medium. It switches on SSH for every camera Protect manages and restarts Protect, which pauses recording on all cameras for a few minutes.
+
 A G4 Doorbell Pro ships with SSH switched off, and Protect has no setting to turn it on. Getting a shell took four separate fixes: the UDM's own SSH, a Protect config override, the override file's ownership, and the key file Dropbear reads. This page lists them in the order they are needed.
 
 The steps come from the log of the session that first got in: a UDM Pro running UniFi OS 5.1.34 with Protect 7.3.74, and a doorbell on firmware 5.5.45. Step 6 is copied from that log. Step 3 combines the log's first command with the ownership fix it needed later, and was not run as written. Step 7 was tested while writing this page. The list at the end names what was never tested.
@@ -77,7 +79,7 @@ The steps come from the log of the session that first got in: a UDM Pro running 
 
 - The override file had the wrong owner. The first version was written by root with mode 600. Protect runs as `unifi-protect`, so it could not read the file, logged that, and carried on with SSH off. Port 22 stayed closed until the owner was changed and Protect restarted.
 - `ssh-copy-id` reported success twice and the key still failed. It added the line to the persistent file. `/etc/dropbear/authorized_keys` was empty (0 bytes, timestamp December 1999) and is the file Dropbear reads. Checking `ls -l` on both files in the doorbell's shell is what exposed it.
-- Newer OpenSSH clients are dropped during key exchange. Add `-o HostKeyAlgorithms=ecdsa-sha2-nistp256`. The [control reference](g4-doorbell-pro-control-reference.md) has the detail.
+- Newer OpenSSH clients are dropped during key exchange. Add `-o HostKeyAlgorithms=ecdsa-sha2-nistp256`. The [control reference](../reference/verified-controls.md) has the detail.
 - The Protect restart looked worse than it was. Right after it, the API listed all five cameras as disconnected, while the doorbell's recording files were being written again. Only the doorbell's recording was checked.
 
 ## Undo

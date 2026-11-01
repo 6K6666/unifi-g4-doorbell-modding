@@ -1,12 +1,14 @@
 # LED, sound and screen control
 
+In short: the ways Ubiquiti's own tools drive the ring, the sounds and the screen, with what has and has not been tried here. Read this when the recipes do not cover what you want.
+
 How the ring, the sounds and the screen are meant to be driven, with the recipes from the firmware's own factory scripts next to what was verified on a real doorbell. The factory scripts are the closest thing to documentation: `test_led_behavior.sh`, `testLed.sh`, `playSound.sh` and `buzzer_sounds.sh` in `/usr/local/bin` and `/usr/bin`. Labels are explained in the [system map](system-map.md). Entries marked "stock script" have not been run here.
 
 ## Three ways to light the ring
 
 | Path | What it is | Status |
 |---|---|---|
-| `SetLEDStatus` to `ubnt_mcu_agent` | direct command to the ring's microcontroller: one color, brightness, and a mode (solid, blinking, breathing) | run and seen; see the [control reference](g4-doorbell-pro-control-reference.md) |
+| `SetLEDStatus` to `ubnt_mcu_agent` | direct command to the ring's microcontroller: one color, brightness, and a mode (solid, blinking, breathing) | run and seen; see the [control reference](verified-controls.md) |
 | `ChangeSoundLedSettings` to `ubnt_sounds_leds` | the "LED face" settings: color names, blink, breathing, a rotating animation | stock script; the two earlier attempts did not work, see below |
 | sysfs `/sys/class/leds/G` | adds green through the LP5562 driver; with red from the first path it gives orange and yellow | run and seen |
 
@@ -40,7 +42,7 @@ Three details matter: `amber` exists as a named color, the rotating animation li
 
 ## Screens
 
-The stock GUI table for this board defines 49 screen ids; [docs/data/lcm-screens.txt](data/lcm-screens.txt) lists them. The ones that matter for customizing:
+The stock GUI table for this board defines 49 screen ids; [lcm-screens.txt](data/lcm-screens.txt) lists them. The ones that matter for customizing:
 
 | Screen | Stock content | Notes |
 |---|---|---|
@@ -50,7 +52,7 @@ The stock GUI table for this board defines 49 screen ids; [docs/data/lcm-screens
 | `TALKING` | "Talk" over `Talking_Anim_48.png` | while audio plays through the speaker, including audio sent from Home Assistant |
 | `RESTARTING`, `UPDATING_FIRMWARE`, `POOR_WIFI_SIGNAL`, `INSUFFICIENT_POWER` | system warnings | keep these stock |
 
-`ShowGui` with a `guiId` and `brightness` shows any of them (run). A custom animation replaces the sprite for one `guiId`; see the [control reference](g4-doorbell-pro-control-reference.md) for the file format and the merge behavior. The 240 by 240 LCD is also framebuffer `fb2`; drawing to it directly was not tried.
+`ShowGui` with a `guiId` and `brightness` shows any of them (run). A custom animation replaces the sprite for one `guiId`; see the [control reference](verified-controls.md) for the file format and the merge behavior. The 240 by 240 LCD is also framebuffer `fb2`; drawing to it directly was not tried.
 
 ## Sounds
 
@@ -59,7 +61,7 @@ Four routes, from the firmware's perspective:
 | Route | How | Status |
 |---|---|---|
 | Ring tone | a `customSounds` entry for `RING_BUTTON_PRESSED` in `ubnt_sounds_leds.conf`, with the file in `/etc/persistent/sounds/` | run and heard; the NVR can overwrite it |
-| Named state | `PlayState` with a state name | stock script uses it once; the firmware has 134 state names in [docs/data/play-states.txt](data/play-states.txt), grouped as greetings, door and NFC results, emergency modes, Wi-Fi setup, power and thermal events, and the ring and talk states |
+| Named state | `PlayState` with a state name | stock script uses it once; the firmware has 134 state names in [play-states.txt](data/play-states.txt), grouped as greetings, door and NFC results, emergency modes, Wi-Fi setup, power and thermal events, and the ring and talk states |
 | Local file playback | `/usr/local/bin/playSound.sh FILE [-v 0-100]`: plays `.ogg` with `play -v` (volume 0 to 1) and `.wav` with `aplay --volume` | stock script; `play`, `aplay`, `sox` and `amixer` are installed. Whether the speaker amplifier is on without the sound service is not known |
 | Buzzer | `buzzer_sounds.sh` drives a PWM buzzer at `/sys/class/pwm/pwmchip9/pwm0` | stock script; that path does not exist on this unit |
 

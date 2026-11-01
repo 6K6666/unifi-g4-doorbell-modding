@@ -1,5 +1,9 @@
 # Exploring the doorbell safely
 
+Risk: low if you follow it.
+
+In short: the doorbell has little spare CPU and memory. Copy files off and read them on your own computer instead of searching on the doorbell.
+
 The doorbell is a small computer with little spare CPU and memory, and the same machine is recording video and watching the door. These are the habits that worked while surveying it, and the one mistake that did not.
 
 ## Copy files off, then search them elsewhere
@@ -42,5 +46,5 @@ Nothing copied for this repository includes those. A keyword search for `psk` an
 ## What not to touch without a plan
 
 - `/dev/spidev1.1`, the MTD devices and the I2C tools: they bypass the drivers and have no confirmation.
-- Messages that reset, reboot, update or re-flash (listed in the [IPC reference](ipc-and-services.md)).
+- Messages that reset, reboot, update or re-flash (listed in the [IPC reference](../reference/ipc-and-services.md)).
 - Anything that restarts `ubnt_avclient`: the doorbell drops its link to the NVR and recording pauses.

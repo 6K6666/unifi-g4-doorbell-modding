@@ -1,5 +1,7 @@
 # IPC and services
 
+In short: the doorbell's programs send each other messages, and one command, `ubnt_ipc_cli`, lets you send one yourself. This page explains the command, what the replies mean and which messages are worth trying.
+
 The doorbell's services talk to each other through a local message bus, and `ubnt_ipc_cli` puts a message on it from the shell. Nearly everything controllable on the device is reached this way. Labels are explained in the [system map](system-map.md).
 
 ## Sending a message
@@ -48,7 +50,7 @@ a shell      ->  ubnt_ipc_cli           ->  the same services
 
 | Target | Message | Result |
 |---|---|---|
-| `ubnt_mcu_agent` | `SetLEDStatus` with `mode`, `fgColor`, `bgColor`, `bright`, `breathingPeriodMs` | drives the button ring (seen); details in the [control reference](g4-doorbell-pro-control-reference.md) |
+| `ubnt_mcu_agent` | `SetLEDStatus` with `mode`, `fgColor`, `bgColor`, `bright`, `breathingPeriodMs` | drives the button ring (seen); details in the [control reference](verified-controls.md) |
 | `ubnt_sounds_leds` | `ChangeSoundLedSettings` with only `customSounds` | installed a custom ring tone (logged and seen) |
 | `ubnt_sounds_leds` | `ChangeSoundLedSettings` with `screenOffTimeout` | accepted `auto`, `15`, `30`, `60`; anything else fell back to `auto` and logged why (logged) |
 | `ubnt_sounds_leds` | `ChangeSoundLedSettings` with `userLedOnNoff`, `userLedColorFg`, `userLedColorBg`, `userLedBlinkPeriodMs` | ring unchanged (seen); the log recorded that lit, blink, animation and breathing parameters cannot be used together, so the service rejected it (logged); see the [recipes](led-sound-and-screen-control.md) |
@@ -76,7 +78,7 @@ Not run here. Argument shapes are as written in the scripts.
 
 ## What each service accepts
 
-[docs/data/ipc-names.txt](data/ipc-names.txt) lists every message name found in 19 service binaries, split into commands and events. The lists are names only, taken with `strings`. A name in a binary does not show that the service handles it on this board. Highlights worth trying first:
+[ipc-names.txt](data/ipc-names.txt) lists every message name found in 19 service binaries, split into commands and events. The lists are names only, taken with `strings`. A name in a binary does not show that the service handles it on this board. Highlights worth trying first:
 
 | Service | Interesting names |
 |---|---|

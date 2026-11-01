@@ -1,6 +1,18 @@
-# Halloween 2026: Haunted Witch Cat
+# Worked example: Halloween 2026, Haunted Witch Cat
 
-Armed 6:53 PM MDT on October 31, 2026. Expires 2026-11-01 00:00 America/Denver (epoch 1793512800). The request is in [SPEC.md](SPEC.md). How the doorbell is controlled is in [the control reference](../docs/g4-doorbell-pro-control-reference.md), and what broke while building this is in [the build and review](../docs/halloween-2026-build-and-review.md).
+A complete project built from the rest of this repository: a one-night show that uses the doorbell's ring, spotlight, screen and ring tone, plus four LIFX bulbs, all started from Home Assistant when the driveway camera or the doorbell sees someone. It is here to show how the pieces fit, not as something to copy whole.
+
+It was armed at 6:53 PM MDT on October 31, 2026 and expires at 2026-11-01 00:00 America/Denver (epoch 1793512800). The request it was built from is in [SPEC.md](SPEC.md). What broke while building it, and what was left unproven, is in the [build and review](docs/build-and-review.md).
+
+## What it shows you how to do
+
+| To learn this | Look at |
+|---|---|
+| run a bounded script on the doorbell, started by a restricted key | [`doorbell/halloween.sh`](doorbell/halloween.sh) and [running your own scripts](../../docs/how-to/running-custom-scripts.md) |
+| call the doorbell from Home Assistant | [`homeassistant/halloween_2026.yaml`](homeassistant/halloween_2026.yaml) |
+| make custom screen pictures | [`assets/`](assets/), [`anim/`](anim/) and the [recipes](../../docs/how-to/recipes.md) |
+| synthesize a ring tone with no recordings | [`doorbell/make_sounds.py`](doorbell/make_sounds.py) |
+| plan for a show that must end by itself | the expiry checks and restore in the Home Assistant package |
 
 ## What a visitor sees
 

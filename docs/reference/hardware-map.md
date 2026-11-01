@@ -1,6 +1,8 @@
 # Hardware map
 
-The chips on the doorbell, the bus each one sits on, and the Linux interface that reaches it. Taken from `/sys`, `/proc` and the loaded kernel modules on a G4 Doorbell Pro (system ID 0xa574). Labels are explained in the [system map](system-map.md). Reads only: nothing on this page was written to except the LED and torch channels described in the [control reference](g4-doorbell-pro-control-reference.md).
+In short: a list of the chips inside the doorbell, the wires they hang off, and the files that read or set them. Useful when you want to know whether a feature exists in hardware before you hunt for the software.
+
+The chips on the doorbell, the bus each one sits on, and the Linux interface that reaches it. Taken from `/sys`, `/proc` and the loaded kernel modules on a G4 Doorbell Pro (system ID 0xa574). Labels are explained in the [system map](system-map.md). Reads only: nothing on this page was written to except the LED and torch channels described in the [control reference](verified-controls.md).
 
 ## Chips by bus
 

@@ -1,4 +1,6 @@
-# G4 Doorbell Pro control reference
+# Verified controls
+
+In short: this page lists the controls that have been shown to work on a real doorbell: the ring, spotlight, screen, ring tone and SSH details. Where it and another page disagree, check the evidence label on each claim.
 
 This is what controls what on a UniFi G4 Doorbell Pro (board G4R, system ID 0xa574, firmware 5.5.45) that a UniFi Protect NVR manages. Everything here was found on 2026-10-31 by sending a command and watching or listening to the hardware. Each claim carries one of three labels:
 
@@ -10,9 +12,9 @@ The device runs Linux 4.9.184 (aarch64) with BusyBox 1.37.0 and Dropbear 2020.81
 
 ## Reaching the doorbell
 
-The login is `ubnt`, which maps to uid 0. Password and key logins both work. SSH is off on a new doorbell; [getting SSH access](getting-ssh-access-to-the-doorbell.md) covers turning it on.
+The login is `ubnt`, which maps to uid 0. Password and key logins both work. SSH is off on a new doorbell; [getting SSH access](../getting-started/getting-ssh-access.md) covers turning it on.
 
-Dropbear reads `/etc/dropbear/authorized_keys`. When this was found it held one line, the Mac's key (added with step 6 of [the SSH guide](getting-ssh-access-to-the-doorbell.md); the stock file was empty), in a directory with a 1999 timestamp, which suggests the file is created at boot; how it is built was not traced. A line added only to `/etc/persistent/.ssh/authorized_keys` was ignored (logged: the key was offered and rejected; the same line in the Dropbear file authenticated). The persistent file is on flash and survives reboots. The Dropbear file probably does not, so a key added there should disappear at the next reboot; no reboot was done to confirm it.
+Dropbear reads `/etc/dropbear/authorized_keys`. When this was found it held one line, the Mac's key (added with step 6 of [the SSH guide](../getting-started/getting-ssh-access.md); the stock file was empty), in a directory with a 1999 timestamp, which suggests the file is created at boot; how it is built was not traced. A line added only to `/etc/persistent/.ssh/authorized_keys` was ignored (logged: the key was offered and rejected; the same line in the Dropbear file authenticated). The persistent file is on flash and survives reboots. The Dropbear file probably does not, so a key added there should disappear at the next reboot; no reboot was done to confirm it.
 
 OpenSSH 10 clients need `-o HostKeyAlgorithms=ecdsa-sha2-nistp256`. Without it the doorbell drops the connection during key exchange, before any key is checked. Dropbear is started with `-r /etc/persistent/dropbear_ecdsa_host_key`.
 

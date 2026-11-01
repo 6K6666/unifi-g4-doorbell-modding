@@ -1,6 +1,6 @@
 # Halloween 2026: build log and review
 
-The goal was a one-night show on the front-door G4 Doorbell Pro and four LIFX bulbs: a purple and orange idle, an orange wave when the driveway camera sees a person, a greeting when the doorbell does, and a cat, a sound and a light routine when someone presses the button. The original request is in [SPEC.md](../halloween-2026/SPEC.md). Mode was armed at 6:53:47 PM MDT on October 31 and expires at midnight.
+The goal was a one-night show on the front-door G4 Doorbell Pro and four LIFX bulbs: a purple and orange idle, an orange wave when the driveway camera sees a person, a greeting when the doorbell does, and a cat, a sound and a light routine when someone presses the button. The original request is in [SPEC.md](../SPEC.md). Mode was armed at 6:53:47 PM MDT on October 31 and expires at midnight.
 
 This page records the order things happened in, what broke, what was still unproven when the show went live, and what to do differently next time.
 
@@ -26,7 +26,7 @@ All times are MDT, October 31, from the doorbell log and Home Assistant history.
 
 ## What was built
 
-A Home Assistant package ([halloween_2026.yaml](../halloween-2026/homeassistant/halloween_2026.yaml), 488 lines) that defines seven scripts, eleven automations and 32 entities in all, counting the helpers, scripts and automations. A shell script ([halloween.sh](../halloween-2026/doorbell/halloween.sh), 86 lines) that runs on the doorbell and is the only thing the temporary SSH key can run. A Python script ([make_sounds.py](../halloween-2026/doorbell/make_sounds.py)) that synthesizes the two cat sounds with additive vocal synthesis, so no recordings or audio libraries are needed.
+A Home Assistant package ([halloween_2026.yaml](../homeassistant/halloween_2026.yaml), 488 lines) that defines seven scripts, eleven automations and 32 entities in all, counting the helpers, scripts and automations. A shell script ([halloween.sh](../doorbell/halloween.sh), 86 lines) that runs on the doorbell and is the only thing the temporary SSH key can run. A Python script ([make_sounds.py](../doorbell/make_sounds.py)) that synthesizes the two cat sounds with additive vocal synthesis, so no recordings or audio libraries are needed.
 
 Home Assistant never animates the doorbell frame by frame. It sends one word (`greet`, `press`, `idle`, `stock`, `restore`, `display_on`, `display_off`, `sound_on`, `sound_off`, `sound_check`, `revoke_key`) and the script on the doorbell runs the effect locally. Each effect ends in a detached timer that returns the ring and spotlight to a known state if no later command arrives.
 

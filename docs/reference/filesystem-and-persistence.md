@@ -1,5 +1,7 @@
 # Filesystem and persistence
 
+In short: almost everything on the doorbell is read-only or lost on restart. One small flash volume keeps settings, and nothing in the stock scripts starts your own files from it at boot, so changes that must last need something outside the doorbell to reapply them.
+
 Where files can be changed on the doorbell, what survives a reboot, and what reads them. Labels are explained in the [system map](system-map.md).
 
 ## What is writable
@@ -35,7 +37,7 @@ Both write the file themselves. The firmware's stock persistence call is `SaveTo
 
 ## What overwrites your changes
 
-- The Protect controller. It owns the screen, sound and LED settings and re-sends them at times it chooses. One re-send replaced a custom ring sound and deleted its file within a second of a speaker volume change (logged). Anything kept in `ubnt_sounds_leds.conf` needs a repair check. See the [control reference](g4-doorbell-pro-control-reference.md).
+- The Protect controller. It owns the screen, sound and LED settings and re-sends them at times it chooses. One re-send replaced a custom ring sound and deleted its file within a second of a speaker volume change (logged). Anything kept in `ubnt_sounds_leds.conf` needs a repair check. See the [control reference](verified-controls.md).
 - `/linuxrc`, which copies `inittab`, `rc.d`, `modules.d`, `udev` and a few others over `/etc` at every boot, so edits there never survive.
 - Firmware updates. A comment in the stock LED script says the updater overwrites the root filesystem in place, and that a shell loop forking `sleep` during the flash crashes because the C library is replaced under it.
 
