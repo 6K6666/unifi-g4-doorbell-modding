@@ -22,7 +22,7 @@ Dropbear's binary contains the authorized_keys options `command="`, `no-port-for
 
 ## Button ring
 
-The ring is driven by the microcontroller, not by anything under `/sys/class/leds`. Setting `R` to 5% for three seconds, and pushing `userLedColorFg` through `ChangeSoundLedSettings`, changed nothing on the ring (seen, in the earlier session).
+Setting `R` to 5% for three seconds, and two attempts to push `userLedColorFg` through `ChangeSoundLedSettings`, changed nothing on the ring (seen). The `ChangeSoundLedSettings` attempts were rejected by the service's own validation, so they do not show that path is dead.
 
 What works is the agent's `SetLEDStatus` call:
 
@@ -117,9 +117,9 @@ Anything stored in `ubnt_sounds_leds.conf` needs a check that runs on a timer an
 ## What did not work
 
 - `GetSoundLedSettings`, `GetLEDStatus`, `GetState`: the sound service answers `Operation not supported`.
-- `ChangeSoundLedSettings` with `userLed*` fields: no visible change on the ring, with `statusCode 0`.
+- `ChangeSoundLedSettings` with `userLed*` fields sent alone: no visible change on the ring, with `statusCode 0`. The factory LED test sends two preparation messages first (`PlayState` `CONTROLLER_CONNECTED`, then `ledFaceEnabled` and `ledFaceAlwaysOnWhenManaged`); see [the recipes](led-sound-and-screen-control.md). The stock sequence has not been sent.
 - `R`, `B`, `W` under `/sys/class/leds`: no visible effect at brightness 150.
-- `PlayFile`: accepted by the sound service with `statusCode 0` for four different file arguments; no sound, no log line. The name `fileName` sits next to `ToFCalibrationControl` in the binary's strings, so it probably belongs to the distance sensor.
+- `PlayFile`: a handler of the sound service (it sits in its handler list with `PlayBuzzer` and `CustomSoundsOperation`). It returned `statusCode 0` with `file` and with `fileName`, relative and absolute paths, and played nothing and logged nothing. The argument shape is unknown.
 - `media_player.play_media`, first try: with no `announce` flag and the volume at 20%, Home Assistant accepted it and nothing was heard. The second try, with `announce: true` at 50%, played. Which of the two changes mattered was not isolated.
 - Raw SPI: `/dev/spidev1.1` exists (device tree `ambarella,spidev`). Nothing was written to it because the attached chip is unknown.
 

@@ -1,23 +1,30 @@
-# Doorbell seasonal automations
+# UniFi G4 Doorbell Pro: advanced control notes and seasonal shows
 
-Themed light, sound and screen shows for a UniFi G4 Doorbell Pro, four LIFX bulbs and Home Assistant. Each season is a self-contained folder that turns on by hand, expires on a date, and puts everything back from a saved snapshot.
+Notes on getting a shell on a UniFi G4 Doorbell Pro, what runs inside it, and how to drive its button ring, spotlight, screen and ring tone. The first thing built on that knowledge is a one-night Halloween show that coordinates the doorbell, four LIFX bulbs and Home Assistant. The research is the more reusable part, and most of this repository is about it.
 
-The first season, Halloween 2026, was armed at 6:53 PM MDT on October 31 and is set to expire at midnight. Building it meant working out how the doorbell's ring, spotlight, screen and ring tone are controlled, because Protect does not expose any of them. That knowledge is the more reusable part of this repository, and it is written down in [the control reference](docs/g4-doorbell-pro-control-reference.md).
+Everything was learned on one doorbell (board G4R, system ID 0xa574, firmware 5.5.45) behind a UniFi Protect NVR, on 2026-10-31. Other firmware versions and the PoE model (0xa575) will differ. Changes can interrupt recording and, in the worst case, leave the device needing a recovery procedure. The license disclaims any warranty.
 
 ## Where to start
 
 | If you want | Read |
 |---|---|
-| To get an SSH shell on the doorbell in the first place | [docs/getting-ssh-access-to-the-doorbell.md](docs/getting-ssh-access-to-the-doorbell.md) |
-| To control the doorbell's ring, spotlight, screen or ring tone | [docs/g4-doorbell-pro-control-reference.md](docs/g4-doorbell-pro-control-reference.md) |
-| To know what broke while building Halloween and what was left unproven | [docs/halloween-2026-build-and-review.md](docs/halloween-2026-build-and-review.md) |
-| To see the Halloween show and restore steps | [halloween-2026/README.md](halloween-2026/README.md) |
-| To start another season | copy `halloween-2026/`, then read "For the next season" in the review |
+| a shell on the doorbell | [getting SSH access](docs/getting-ssh-access-to-the-doorbell.md) |
+| to see what runs on it and how it boots | [system map](docs/system-map.md) |
+| to know what survives a reboot and what can be modified | [filesystem and persistence](docs/filesystem-and-persistence.md) |
+| the chips, buses and sysfs interfaces | [hardware map](docs/hardware-map.md) |
+| to send commands to its services | [IPC and services](docs/ipc-and-services.md) |
+| ring, screen and sound recipes | [LED, sound and screen control](docs/led-sound-and-screen-control.md) |
+| what is verified for the ring, spotlight, screen and ring tone | [control reference](docs/g4-doorbell-pro-control-reference.md) |
+| habits for exploring without disturbing the device | [exploring safely](docs/exploring-the-doorbell-safely.md) |
+| what broke while building the Halloween show | [build and review](docs/halloween-2026-build-and-review.md) |
+| the Halloween show itself | [halloween-2026/README.md](halloween-2026/README.md) |
+
+Each claim in the docs carries a label: run (executed here), seen (a person watched or listened), logged (shown by a log or readback), strings (read from the firmware binaries), or stock script (read in the firmware's own scripts, not run).
 
 ## Layout
 
 ```
-docs/                          reference and review
+docs/                          the research, plus data/ with message, state and screen names
 halloween-2026/
   SPEC.md                      the request as given
   README.md                    status, how it runs, how to restore by hand
@@ -28,22 +35,17 @@ halloween-2026/
   docs/                        the earlier plan
 ```
 
-## What each season needs
+Seasons are folders named `<holiday>-<year>`: self-contained, off until one toggle is on, expiring by date, restoring from a snapshot. Start another by copying the last one.
 
-- A UniFi Protect NVR with a G4 Doorbell Pro (tested on firmware 5.5.45) and SSH access to it.
-- Home Assistant with the UniFi Protect, LIFX and `shell_command` integrations, and an SSH key that Home Assistant can use against the doorbell.
-- Python 3 with numpy and ffmpeg on the machine that builds the sounds.
+## What a season needs
 
-## Conventions every season follows
-
-- Nothing runs until one toggle is on, and the package checks an expiry date on every trigger.
-- The doorbell script is the only thing the temporary SSH key can run, and each effect ends in a timer that returns the ring and spotlight to a known state.
-- The show saves the bulbs' states before it starts and restores them when it stops, at midnight, and after a Home Assistant restart.
-- Recording, the indoor chime, notifications, infrared and two-way audio are left alone.
+- a UniFi Protect NVR with a G4 Doorbell Pro and SSH access to it
+- Home Assistant with the UniFi Protect, LIFX and `shell_command` integrations, and an SSH key Home Assistant can use against the doorbell
+- Python 3 with numpy, and ffmpeg, on the machine that builds the sounds
 
 ## Not in the repository
 
-The two Ubiquiti binaries used to read the doorbell's message names (`ubnt_sounds_leds`, `ubnt_lcm_gui`) are not committed. Copy them from `/bin` on the doorbell. Backups of the doorbell's own files and SSH key lines stay local, because they hold Ubiquiti assets and key material. The WAV files are regenerated by `make_sounds.py`.
+The Ubiquiti binaries used to read message names (`ubnt_sounds_leds`, `ubnt_lcm_gui` and the others) are not committed; copy them from `/bin` on your own doorbell. Backups of the doorbell's files and SSH key lines stay local, because they hold Ubiquiti assets and key material. WAV files are regenerated by `make_sounds.py`. The firmware's stock scripts are described and quoted in short pieces, not copied.
 
 Addresses in the code and docs are placeholders: `DOORBELL_IP`, `HOME_ASSISTANT_HOST` and, in the SSH guide, `UDM_IP`.
 
