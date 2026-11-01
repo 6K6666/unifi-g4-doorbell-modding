@@ -1,0 +1,489 @@
+# Haunted Witch Cat: tonight only. Expires 2026-11-01 00:00 America/Denver (epoch 1793512800).
+# Package is inert until input_boolean.halloween_mode is turned on.
+# Replace DOORBELL_IP and HOME_ASSISTANT_HOST before installing (see ../README.md).
+
+input_boolean:
+  halloween_mode:
+    name: Halloween Mode
+    icon: mdi:ghost
+  halloween_snapshot_valid:
+    name: Halloween Snapshot Valid
+    icon: mdi:content-save
+  halloween_approach_meow:
+    name: Halloween Approach Meow (shows talking screen)
+    icon: mdi:cat
+    initial: false
+
+input_button:
+  halloween_preview_approach:
+    name: Preview Approach
+    icon: mdi:walk
+  halloween_preview_ring:
+    name: Preview Ring
+    icon: mdi:bell-ring
+  halloween_stop_restore:
+    name: Stop & Restore
+    icon: mdi:stop-circle
+
+input_number:
+  halloween_door_min:
+    name: Halloween Front Door Minimum
+    min: 10
+    max: 255
+    step: 5
+    initial: 120
+
+input_datetime:
+  halloween_last_approach:
+    name: Halloween Last Approach
+    has_date: true
+    has_time: true
+  halloween_last_ring:
+    name: Halloween Last Ring
+    has_date: true
+    has_time: true
+  halloween_last_greet:
+    name: Halloween Last Greeting
+    has_date: true
+    has_time: true
+
+input_text:
+  halloween_snap_1: {name: Halloween Snapshot 1, max: 255}
+  halloween_snap_2: {name: Halloween Snapshot 2, max: 255}
+  halloween_snap_3: {name: Halloween Snapshot 3, max: 255}
+  halloween_snap_4: {name: Halloween Snapshot 4, max: 255}
+
+shell_command:
+  # Dedicated key; the doorbell accepts it only for the whitelisted halloween.sh commands.
+  halloween_bell: >-
+    ssh -i /config/.ssh/halloween_ed25519 -o BatchMode=yes -o ConnectTimeout=4
+    -o UserKnownHostsFile=/config/.ssh/halloween_known_hosts -o StrictHostKeyChecking=accept-new
+    -o HostKeyAlgorithms=ecdsa-sha2-nistp256 ubnt@DOORBELL_IP {{ cmd }}
+  halloween_cleanup: rm -f /config/.ssh/halloween_ed25519 /config/.ssh/halloween_ed25519.pub
+
+script:
+  halloween_snapshot:
+    alias: Halloween - Snapshot Lights
+    sequence:
+      - repeat:
+          for_each:
+            - {light: light.driveway_light_1, snap: input_text.halloween_snap_1}
+            - {light: light.driveway_light_2, snap: input_text.halloween_snap_2}
+            - {light: light.driveway_light_3, snap: input_text.halloween_snap_3}
+            - {light: light.front_door_light, snap: input_text.halloween_snap_4}
+          sequence:
+            - action: input_text.set_value
+              target: {entity_id: "{{ repeat.item.snap }}"}
+              data:
+                value: >-
+                  {{ {'s': states(repeat.item.light), 'b': state_attr(repeat.item.light, 'brightness'),
+                      'h': state_attr(repeat.item.light, 'hs_color'),
+                      'k': state_attr(repeat.item.light, 'color_temp_kelvin')} | to_json }}
+      - action: input_boolean.turn_on
+        target: {entity_id: input_boolean.halloween_snapshot_valid}
+
+  halloween_restore_lights:
+    alias: Halloween - Restore Lights
+    sequence:
+      - condition: state
+        entity_id: input_boolean.halloween_snapshot_valid
+        state: "on"
+      - repeat:
+          for_each:
+            - {light: light.driveway_light_1, snap: input_text.halloween_snap_1}
+            - {light: light.driveway_light_2, snap: input_text.halloween_snap_2}
+            - {light: light.driveway_light_3, snap: input_text.halloween_snap_3}
+            - {light: light.front_door_light, snap: input_text.halloween_snap_4}
+          sequence:
+            - variables:
+                s: "{{ states(repeat.item.snap) | from_json(default={}) }}"
+            - choose:
+                - conditions: "{{ s.get('s') == 'on' }}"
+                  sequence:
+                    - action: light.turn_on
+                      target: {entity_id: "{{ repeat.item.light }}"}
+                      data: >-
+                        {{ dict(brightness=s.get('b') or 255, transition=2)
+                           | combine(dict(hs_color=s.h) if s.get('h') else (dict(color_temp_kelvin=s.k) if s.get('k') else {})) }}
+                - conditions: "{{ s.get('s') == 'off' }}"
+                  sequence:
+                    - action: light.turn_off
+                      target: {entity_id: "{{ repeat.item.light }}"}
+                      data: {transition: 2}
+      - action: input_boolean.turn_off
+        target: {entity_id: input_boolean.halloween_snapshot_valid}
+
+  halloween_idle_loop:
+    alias: Halloween - Idle Loop
+    mode: restart
+    sequence:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: input_boolean.halloween_mode
+              state: "on"
+            - condition: template
+              value_template: "{{ now().timestamp() < 1793512800 }}"
+          sequence:
+            - repeat:
+                for_each:
+                  - [275, 25]
+                  - [25, 275]
+                sequence:
+                  - parallel:
+                      - action: light.turn_on
+                        target: {entity_id: [light.driveway_light_1, light.driveway_light_3]}
+                        data: {hs_color: ["{{ repeat.item[0] }}", 100], brightness: 122, transition: 5}
+                      - action: light.turn_on
+                        target: {entity_id: light.driveway_light_2}
+                        data: {hs_color: ["{{ repeat.item[1] }}", 100], brightness: 122, transition: 5}
+                      - action: light.turn_on
+                        target: {entity_id: light.front_door_light}
+                        data: {hs_color: [35, 100], brightness: "{{ states('input_number.halloween_door_min') | int }}", transition: 3}
+                  - delay: 7
+
+  halloween_approach:
+    alias: Halloween - Approach Wave
+    mode: single
+    max_exceeded: silent
+    sequence:
+      - action: script.turn_off
+        target: {entity_id: script.halloween_idle_loop}
+      - action: input_datetime.set_datetime
+        target: {entity_id: input_datetime.halloween_last_approach}
+        data: {datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"}
+      - repeat:
+          for_each:
+            - light.driveway_light_1
+            - light.driveway_light_2
+            - light.driveway_light_3
+            - light.front_door_light
+          sequence:
+            - action: light.turn_on
+              target: {entity_id: "{{ repeat.item }}"}
+              data: {hs_color: [25, 100], brightness: 230, transition: 1}
+            - delay: 1
+      - delay: 1
+      - if: "{{ is_state('input_boolean.halloween_mode', 'on') }}"
+        then:
+          - action: script.turn_on
+            target: {entity_id: script.halloween_idle_loop}
+
+  halloween_greet:
+    alias: Halloween - Doorbell Greeting
+    mode: single
+    max_exceeded: silent
+    sequence:
+      - action: script.turn_off
+        target: {entity_id: [script.halloween_idle_loop, script.halloween_approach]}
+      - action: input_datetime.set_datetime
+        target: {entity_id: input_datetime.halloween_last_greet}
+        data: {datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"}
+      - action: light.turn_on
+        target: {entity_id: light.front_door_light}
+        data: {hs_color: [30, 100], brightness: 200, transition: 1}
+      - action: shell_command.halloween_bell
+        data: {cmd: greet}
+        continue_on_error: true
+      # Optional quiet meow (file is mastered quiet). Off by default: audio through the speaker makes the doorbell
+      # show its stock "talking" picture instead of the cat. Never change the speaker volume: Protect then pushes
+      # its settings and wipes the custom ring sound.
+      - if: "{{ is_state('input_boolean.halloween_approach_meow', 'on') and is_state('media_player.g4_doorbell_pro_speaker', 'idle') }}"
+        then:
+          - action: media_player.play_media
+            target: {entity_id: media_player.g4_doorbell_pro_speaker}
+            data:
+              media_content_id: http://HOME_ASSISTANT_HOST:8123/local/halloween/meow-curious.mp3
+              media_content_type: music
+              announce: true
+            continue_on_error: true
+      - delay: 30
+      - if: "{{ is_state('input_boolean.halloween_mode', 'on') }}"
+        then:
+          - action: shell_command.halloween_bell
+            data: {cmd: restore}
+            continue_on_error: true
+          - action: script.turn_on
+            target: {entity_id: script.halloween_idle_loop}
+
+  halloween_ring:
+    alias: Halloween - Ring Show
+    mode: single
+    max_exceeded: silent
+    sequence:
+      - action: script.turn_off
+        target: {entity_id: [script.halloween_approach, script.halloween_greet, script.halloween_idle_loop]}
+      - action: input_datetime.set_datetime
+        target: {entity_id: input_datetime.halloween_last_ring}
+        data: {datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"}
+      - parallel:
+          - action: shell_command.halloween_bell
+            data: {cmd: press}
+            continue_on_error: true
+          - sequence:
+              - action: light.turn_on
+                target: {entity_id: light.front_door_light}
+                data: {hs_color: [30, 100], brightness: "{{ [states('input_number.halloween_door_min') | int, 180] | max }}", transition: 1}
+              - repeat:
+                  count: 2
+                  sequence:
+                    - action: light.turn_on
+                      target: {entity_id: [light.driveway_light_1, light.driveway_light_2, light.driveway_light_3]}
+                      data: {hs_color: [0, 100], brightness: 140, transition: 0.4}
+                    - delay: 0.5
+                    - action: light.turn_on
+                      target: {entity_id: [light.driveway_light_1, light.driveway_light_2, light.driveway_light_3]}
+                      data: {hs_color: [0, 100], brightness: 30, transition: 0.5}
+                    - delay: 0.8
+              - repeat:
+                  count: 3
+                  sequence:
+                    - action: light.turn_on
+                      target: {entity_id: [light.driveway_light_1, light.driveway_light_3]}
+                      data: {hs_color: [25, 100], brightness: 230, transition: 0.6}
+                    - action: light.turn_on
+                      target: {entity_id: light.driveway_light_2}
+                      data: {hs_color: [275, 100], brightness: 230, transition: 0.6}
+                    - delay: 0.8
+                    - action: light.turn_on
+                      target: {entity_id: [light.driveway_light_1, light.driveway_light_3]}
+                      data: {hs_color: [275, 100], brightness: 230, transition: 0.6}
+                    - action: light.turn_on
+                      target: {entity_id: light.driveway_light_2}
+                      data: {hs_color: [25, 100], brightness: 230, transition: 0.6}
+                    - delay: 0.8
+      - delay: 8
+      - action: shell_command.halloween_bell
+        data: {cmd: restore}
+        continue_on_error: true
+      - if: "{{ is_state('input_boolean.halloween_mode', 'on') }}"
+        then:
+          - action: script.turn_on
+            target: {entity_id: script.halloween_idle_loop}
+
+  halloween_stop_restore:
+    alias: Halloween - Stop & Restore
+    mode: single
+    max_exceeded: silent
+    sequence:
+      - action: script.turn_off
+        target: {entity_id: [script.halloween_idle_loop, script.halloween_approach, script.halloween_greet, script.halloween_ring]}
+      - action: input_boolean.turn_off
+        target: {entity_id: input_boolean.halloween_mode}
+      - action: shell_command.halloween_bell
+        data: {cmd: stock}
+        response_variable: bell_restore
+        continue_on_error: true
+      - action: shell_command.halloween_bell
+        data: {cmd: display_off}
+        response_variable: bell_display
+        continue_on_error: true
+      - action: shell_command.halloween_bell
+        data: {cmd: sound_off}
+        response_variable: bell_sound
+        continue_on_error: true
+      - action: script.halloween_restore_lights
+        continue_on_error: true
+      - if: "{{ (bell_restore | default({})).get('returncode', 1) != 0 or (bell_display | default({})).get('returncode', 1) != 0 or (bell_sound | default({})).get('returncode', 1) != 0 }}"
+        then:
+          - action: persistent_notification.create
+            data:
+              title: Halloween restore incomplete
+              message: The doorbell did not confirm restore. Check the ring, spotlight and welcome screen. Backups are in the halloween-2026 folder on the Mac.
+              notification_id: halloween_restore_incomplete
+
+automation:
+  - id: halloween_mode_on
+    alias: Halloween - Mode On
+    triggers:
+      - trigger: state
+        entity_id: input_boolean.halloween_mode
+        to: "on"
+    actions:
+      - if: "{{ now().timestamp() >= 1793512800 }}"
+        then:
+          - action: input_boolean.turn_off
+            target: {entity_id: input_boolean.halloween_mode}
+          - stop: Halloween has ended
+      - if: "{{ is_state('input_boolean.halloween_snapshot_valid', 'off') }}"
+        then:
+          - action: script.halloween_snapshot
+      - action: shell_command.halloween_bell
+        data: {cmd: display_on}
+        continue_on_error: true
+      - action: shell_command.halloween_bell
+        data: {cmd: sound_on}
+        continue_on_error: true
+      - action: shell_command.halloween_bell
+        data: {cmd: idle}
+        continue_on_error: true
+      - action: script.turn_on
+        target: {entity_id: script.halloween_idle_loop}
+
+  # Protect pushes its own settings to the doorbell from time to time and wipes the custom ring sound.
+  # sound_check reinstalls it (and only writes flash when something is missing).
+  - id: halloween_sound_selfheal
+    alias: Halloween - Keep Ring Sound
+    triggers:
+      - trigger: time_pattern
+        minutes: "/2"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.halloween_mode
+        state: "on"
+      - "{{ now().timestamp() < 1793512800 }}"
+    actions:
+      - action: shell_command.halloween_bell
+        data: {cmd: sound_check}
+        continue_on_error: true
+
+  - id: halloween_mode_off
+    alias: Halloween - Mode Off
+    triggers:
+      - trigger: state
+        entity_id: input_boolean.halloween_mode
+        to: "off"
+    actions:
+      - action: script.halloween_stop_restore
+
+  - id: halloween_stop_button
+    alias: Halloween - Stop Button
+    triggers:
+      - trigger: state
+        entity_id: input_button.halloween_stop_restore
+    conditions: "{{ trigger.from_state.state != 'unavailable' }}"
+    actions:
+      - action: script.halloween_stop_restore
+
+  - id: halloween_midnight_shutdown
+    alias: Halloween - Midnight Shutdown
+    triggers:
+      - trigger: time
+        at: "00:00:00"
+      - trigger: time
+        at: "00:10:00"
+      - trigger: time
+        at: "01:00:00"
+    conditions: "{{ now().date() == as_datetime('2026-11-01').date() }}"
+    actions:
+      - action: script.halloween_stop_restore
+      - action: shell_command.halloween_bell
+        data: {cmd: revoke_key}
+        response_variable: revoked
+        continue_on_error: true
+      # Keep the private key until the doorbell confirmed revocation, so a later trigger can retry.
+      - if: "{{ (revoked | default({})).get('returncode', 1) == 0 }}"
+        then:
+          - action: shell_command.halloween_cleanup
+          # Done for tonight: later triggers must not run against a deleted key and raise false alarms.
+          - action: automation.turn_off
+            target: {entity_id: automation.halloween_midnight_shutdown}
+            data: {stop_actions: false}
+      - if: "{{ (revoked | default({})).get('returncode', 1) != 0 }}"
+        then:
+          - action: persistent_notification.create
+            data:
+              title: Halloween key not revoked
+              message: The doorbell did not confirm removal of the halloween-2026-temp key. Delete it from /etc/dropbear/authorized_keys on the doorbell; it only runs halloween.sh and clears when the doorbell reboots.
+              notification_id: halloween_key_not_revoked
+
+  - id: halloween_startup_recover
+    alias: Halloween - Recover On Start
+    triggers:
+      - trigger: homeassistant
+        event: start
+    conditions: "{{ is_state('input_boolean.halloween_mode', 'on') or is_state('input_boolean.halloween_snapshot_valid', 'on') }}"
+    actions:
+      - wait_template: "{{ states('light.driveway_light_1') not in ['unavailable', 'unknown'] and states('light.front_door_light') not in ['unavailable', 'unknown'] }}"
+        timeout: "00:03:00"
+        continue_on_timeout: true
+      - action: script.halloween_stop_restore
+
+  - id: halloween_driveway_person
+    alias: Halloween - Driveway Person
+    triggers:
+      - trigger: state
+        entity_id: event.front_yard_driveway_smart_detection
+    conditions:
+      - "{{ trigger.from_state is not none and trigger.from_state.state != 'unavailable' }}"
+      - "{{ trigger.to_state.state not in ['unavailable', 'unknown'] and trigger.to_state.attributes.event_type == 'person' }}"
+      - "{{ (now() - as_datetime(trigger.to_state.state)).total_seconds() < 15 }}"
+      - condition: state
+        entity_id: input_boolean.halloween_mode
+        state: "on"
+      - "{{ now().timestamp() < 1793512800 }}"
+      - "{{ as_timestamp(now()) - as_timestamp(states('input_datetime.halloween_last_approach'), 0) > 45 }}"
+      - condition: state
+        entity_id: script.halloween_ring
+        state: "off"
+      - condition: state
+        entity_id: script.halloween_greet
+        state: "off"
+    actions:
+      - action: script.halloween_approach
+
+  - id: halloween_doorbell_person
+    alias: Halloween - Doorbell Person
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.g4_doorbell_pro_person_detected
+        from: "off"
+        to: "on"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.halloween_mode
+        state: "on"
+      - "{{ now().timestamp() < 1793512800 }}"
+      - condition: state
+        entity_id: script.halloween_ring
+        state: "off"
+      - "{{ as_timestamp(now()) - as_timestamp(states('input_datetime.halloween_last_greet'), 0) > 45 }}"
+    actions:
+      - action: script.halloween_greet
+
+  - id: halloween_doorbell_ring
+    alias: Halloween - Doorbell Ring
+    triggers:
+      - trigger: state
+        entity_id: event.g4_doorbell_pro_doorbell
+    conditions:
+      - "{{ trigger.from_state is not none and trigger.from_state.state != 'unavailable' }}"
+      - "{{ trigger.to_state.state not in ['unavailable', 'unknown'] and trigger.to_state.attributes.event_type == 'ring' }}"
+      - "{{ (now() - as_datetime(trigger.to_state.state)).total_seconds() < 15 }}"
+      - condition: state
+        entity_id: input_boolean.halloween_mode
+        state: "on"
+      - "{{ now().timestamp() < 1793512800 }}"
+      - "{{ as_timestamp(now()) - as_timestamp(states('input_datetime.halloween_last_ring'), 0) > 10 }}"
+    actions:
+      - action: script.halloween_ring
+
+  - id: halloween_preview_approach
+    alias: Halloween - Preview Approach
+    triggers:
+      - trigger: state
+        entity_id: input_button.halloween_preview_approach
+    conditions: "{{ trigger.from_state.state != 'unavailable' }}"
+    actions:
+      - if: "{{ is_state('input_boolean.halloween_snapshot_valid', 'off') }}"
+        then:
+          - action: script.halloween_snapshot
+      - action: script.halloween_approach
+      - if: "{{ is_state('input_boolean.halloween_mode', 'off') }}"
+        then:
+          - action: script.halloween_restore_lights
+
+  - id: halloween_preview_ring
+    alias: Halloween - Preview Ring
+    triggers:
+      - trigger: state
+        entity_id: input_button.halloween_preview_ring
+    conditions: "{{ trigger.from_state.state != 'unavailable' }}"
+    actions:
+      - if: "{{ is_state('input_boolean.halloween_snapshot_valid', 'off') }}"
+        then:
+          - action: script.halloween_snapshot
+      - action: script.halloween_ring
+      - if: "{{ is_state('input_boolean.halloween_mode', 'off') }}"
+        then:
+          - action: script.halloween_restore_lights

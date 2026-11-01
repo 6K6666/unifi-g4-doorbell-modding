@@ -1,0 +1,10 @@
+.DS_Store
+*.wav
+# Ubiquiti firmware binaries, used only to read message names. Copy from /bin on the doorbell.
+halloween-2026/backups/ubnt_sounds_leds
+halloween-2026/backups/ubnt_lcm_gui
+# Backups hold Ubiquiti assets and SSH key lines; keep them local.
+halloween-2026/backups/*
+!halloween-2026/backups/README.md
+# Payloads from failed attempts; they hold device settings.
+halloween-2026/notes/
