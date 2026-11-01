@@ -70,7 +70,7 @@ The ring should turn red. Try the other color codes by changing `fgColor`:
 | 1 | red |
 | 4 | blue (the normal look) |
 | 5 | pink |
-| 9 | white |
+| 9 | white (the firmware names code 8 White; in testing 8 looked pink and 9 looked white) |
 | 0 | off (also set `"bright":0`) |
 
 The ring cannot make green, orange or purple by itself. Orange is red plus a little green from a second light driver. With the ring red, run this on the doorbell:

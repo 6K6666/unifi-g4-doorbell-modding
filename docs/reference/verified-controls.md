@@ -32,7 +32,7 @@ What works is the agent's `SetLEDStatus` call:
 ubnt_ipc_cli -T=ubnt_mcu_agent -r=1 -t=2000 -m='{"functionName":"SetLEDStatus","mode":1,"fgColor":4,"bgColor":0,"bright":-1}'
 ```
 
-The binary defines `mode` 0 to 6, `fgColor` and `bgColor` 0 to 15, `bright` -1 to 100, `breathingPeriodMs`, `breathingEndsMs`, and four `blinking*` timings (strings). There is no field for an LED index or position, so the whole ring takes one color. The ring keeps the last value until something replaces it.
+The binary defines `mode` 0 to 6 (names below), `fgColor` and `bgColor` 0 to 15, `bright` -1 to 100, `breathingPeriodMs`, `breathingEndsMs`, and four `blinking*` timings (strings). There is no field for an LED index or position, so the whole ring takes one color. The ring keeps the last value until something replaces it.
 
 Colors at `mode` 1, brightness 60 (seen, over three passes; the first reply named three colors for four codes, so some assignments are interpretation, and codes 7 and the white and light pink groups are the least certain):
 
@@ -47,7 +47,11 @@ Colors at `mode` 1, brightness 60 (seen, over three passes; the first reply name
 
 `fgColor 4`, `bright -1` is the stock look: after the test the viewer confirmed it matched how the ring normally appears.
 
-Modes with red at brightness 60 and the timings 3000 ms breathing, 1200 ms blink period, 300 ms on and off (seen, from a list given in order): 1 and 5 solid, 2 nothing visible, 3 blinking, 4 pulsing, 6 not reported. Mode 4 is the hardware breathing mode.
+Mode names, read from the ring chip's Go program (strings; method in [tools/research](../../tools/research/go-funcs.go)): 0 None, 1 On, 2 Off, 3 Blink, 4 Breathing, 5 FadeOnOff, 6 FadeOffOn, 7 and up ModeUnknown. Color names exist for only 0 None, 1 Red, 4 Blue, 8 White and 15 All; every other code is ColorUnknown. A 4-bit mask (1 red, 2 green, 4 blue, 8 white) is a guess at what the codes mean, and the table above only half agrees with it. Codes 2 (off), 3 (red), 5 (pink) and 6 (blue) fit a red and blue ring with no working green. Code 7 looked off where red plus blue was expected, code 8 (named White) looked pink, and code 10 looked light pink; those are among the least certain observations, but they do not fit. Green comes from the `G` channel below, which agrees with a ring that has no green of its own.
+
+None of the seven modes lights part of the ring. The only leads for a partial ring are the LED-face rotating animation and per-LED control through the KTD2061 on the PoE model and G6, both read from stock scripts and untested (see [models](models.md)).
+
+Modes with red at brightness 60 and the timings 3000 ms breathing, 1200 ms blink period, 300 ms on and off (seen, from a list given in order): 1 and 5 solid, 2 off, 3 blinking, 4 pulsing, 6 not reported. The names say 2 is Off, so "nothing visible" was the expected result. Modes 5 and 6 are fades; the names do not say whether they loop.
 
 Orange comes from a second source. The `G` channel of the LP5562 driver (`/sys/class/leds/G`, I2C address 2-0030) adds green to the ring. Red plus `G` at 25 looked orange, at 60 yellow, at 120 greenish yellow (seen). `R`, `B` and `W` showed nothing. The ring in mode 4 over `G` at 12 pulsed between green and orange, which the viewer picked for the Halloween idle effect. Nothing in the firmware strings explains why the ring's green is on the LP5562, and that was not investigated.
 

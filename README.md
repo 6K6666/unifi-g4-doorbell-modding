@@ -13,6 +13,7 @@ The picture above is the doorbell's own welcome screen, replaced with a custom a
 | Turn on SSH, which Ubiquiti leaves off | medium | [getting SSH access](docs/getting-started/getting-ssh-access.md) |
 | Change the button ring's color, or make it pulse | easy | [quick start](docs/how-to/quick-start.md) |
 | Turn the spotlight on and off from a script | easy | [quick start](docs/how-to/quick-start.md) |
+| Turn SSH off again or limit it to one address | easy | [lock it back down](docs/how-to/lock-it-back-down.md) |
 | Show your own picture or animation on the screen | medium | [recipes](docs/how-to/recipes.md) |
 | Play your own sound when someone presses the button | medium | [recipes](docs/how-to/recipes.md) |
 | Keep the screen on instead of letting it go dark | medium | [recipes](docs/how-to/recipes.md) |
@@ -23,7 +24,7 @@ Not working yet: lighting single LEDs in the ring (it takes one color for the wh
 
 ## Before you start
 
-- This was learned on one doorbell: board G4R, system ID `0xa574`, firmware 5.5.45, behind a UniFi Protect NVR. Other firmware versions and the PoE model differ.
+- This was learned on one doorbell: board G4R, system ID `0xa574`, firmware 5.5.45, behind a UniFi Protect NVR. Other firmware versions and models differ; [which model has what](docs/reference/models.md) lists what is known.
 - You need to be comfortable pasting commands into a terminal. Every command has an undo next to it.
 - Nothing here changes recording, notifications or the indoor chime. Changes that go wrong can still interrupt recording or need a recovery procedure. The [undo page](docs/how-to/undo-and-recovery.md) lists what to do.
 - This project is not made by or affiliated with Ubiquiti. You use it at your own risk; the [license](LICENSE) says so.
@@ -45,7 +46,8 @@ docs/
   how-to/              quick start, recipes, custom scripts, undo and recovery
   reference/           how the doorbell works: processes, flash, chips, messages, controls
   glossary.md
-tools/                 small scripts: copy files off, install a key, bounded-effect template
+tools/                 small scripts: copy files off, install a key, bounded-effect template, research helpers
+scripts/check-repo.py  the checks the GitHub Action runs: links, dashes, banned words, private data, script syntax
 examples/
   halloween-2026/      a full show built from all of the above
 AGENTS.md              rules and facts for AI assistants

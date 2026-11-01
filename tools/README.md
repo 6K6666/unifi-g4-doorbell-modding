@@ -8,6 +8,7 @@ Small scripts for exploring and modifying the doorbell. Run them from the reposi
 | [extract-ipc-names.py](extract-ipc-names.py) | lists the message names found in copies of the doorbell's service programs | no (works on local files) |
 | [install-ssh-key.sh](install-ssh-key.sh) | puts your public key where the doorbell's SSH server reads it; does nothing if it is already there | adds a line to `/etc/dropbear/authorized_keys` when the key is missing |
 | [effect-template.sh](effect-template.sh) | a starting point for your own script: watchdog, one effect at a time, checked PID kills | only if you copy it to the doorbell and run it |
+| [research/go-funcs.go](research/go-funcs.go), [research/go-string-method.py](research/go-string-method.py) | list the functions in a Go program such as the ring chip's `ubnt_mcu`, and print what a small enum `String()` method returns for each value | no (works on local files; needs Go and `llvm-objdump`) |
 
 ```sh
 tools/copy-files.sh DOORBELL_IP doorbell-files            # then read and search doorbell-files/

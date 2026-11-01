@@ -11,7 +11,7 @@ Research notes, tested recipes and small tools for a G4 Doorbell Pro (system ID 
 Ask the user, and do not guess:
 
 1. Is SSH working? Have them run `ssh ubnt@DOORBELL_IP`. If it is refused, follow [docs/getting-started/getting-ssh-access.md](docs/getting-started/getting-ssh-access.md) with them. Do not look for credentials on their machine.
-2. Which model and firmware? `grep -E 'sysid|name' /etc/board.info` and the firmware version in Protect. This repository's findings are for `0xa574`, 5.5.45. If it differs, treat every recipe as unverified and say so.
+2. Which model and firmware? `grep -E 'sysid|name' /etc/board.info` and the firmware version in Protect. This repository's findings are for `0xa574`, 5.5.45; [docs/reference/models.md](docs/reference/models.md) compares the other models. If it differs, treat every recipe as unverified and say so.
 3. What do they want: read-only exploration, a reversible change, or something lasting? Do the smallest thing that meets it.
 4. Can someone watch the doorbell? Lights, screen and sound cannot be verified from a log alone. Ask them what they saw.
 
@@ -67,6 +67,9 @@ Ask the user, and do not guess:
 - [tools/extract-ipc-names.py](tools/extract-ipc-names.py): list message names in copies of the service programs
 - [tools/install-ssh-key.sh](tools/install-ssh-key.sh): put your key where Dropbear reads it
 - [tools/effect-template.sh](tools/effect-template.sh): the bounded-effect pattern as a starting point
+
+- [scripts/check-repo.py](scripts/check-repo.py): run `python3 scripts/check-repo.py` before every commit; it is the same check GitHub runs
+- [tools/research/](tools/research/go-funcs.go): list functions in a Go binary and read enum names from it (how the ring chip's mode names were found)
 
 ## If the firmware differs
 

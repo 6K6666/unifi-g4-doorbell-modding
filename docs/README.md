@@ -9,6 +9,7 @@ You have a G4 Doorbell Pro and some patience, and you are comfortable pasting co
 1. [Getting SSH access](getting-started/getting-ssh-access.md): switching on the shell that Ubiquiti leaves off
 2. [Quick start](how-to/quick-start.md): change the ring color, light the spotlight, switch the screen, with an undo for each step
 3. [Undo and recovery](how-to/undo-and-recovery.md): how to put anything back
+   When you are done, [lock it back down](how-to/lock-it-back-down.md): turn SSH off or limit it to one address
 4. [Recipes](how-to/recipes.md): custom welcome picture, custom ring tone, keeping the screen on
 
 ## I want to build something
@@ -30,6 +31,7 @@ You like knowing why. These pages describe the doorbell itself; they change noth
 | [Hardware map](reference/hardware-map.md) | the chips inside and how to reach each one |
 | [IPC and services](reference/ipc-and-services.md) | the internal messages and how to send them |
 | [LED, sound and screen control](reference/led-sound-and-screen-control.md) | the ring, screen and sound options the firmware offers |
+| [Which model has what](reference/models.md) | how the non-Pro, Pro, PoE and G6 Entry differ, and whether the recipes apply |
 | [Verified controls](reference/verified-controls.md) | what has been shown to work on a real doorbell, with the details |
 | [Message, state and screen names](reference/data/) | raw lists taken from the firmware |
 | [Exploring safely](getting-started/exploring-safely.md) | how to look around without slowing the doorbell down |

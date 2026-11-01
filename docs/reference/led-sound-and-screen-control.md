@@ -8,7 +8,7 @@ How the ring, the sounds and the screen are meant to be driven, with the recipes
 
 | Path | What it is | Status |
 |---|---|---|
-| `SetLEDStatus` to `ubnt_mcu_agent` | direct command to the ring's microcontroller: one color, brightness, and a mode (solid, blinking, breathing) | run and seen; see the [control reference](verified-controls.md) |
+| `SetLEDStatus` to `ubnt_mcu_agent` | direct command to the ring's microcontroller: one color, brightness, and a mode (None, On, Off, Blink, Breathing, FadeOnOff, FadeOffOn) | run and seen; see the [control reference](verified-controls.md) |
 | `ChangeSoundLedSettings` to `ubnt_sounds_leds` | the "LED face" settings: color names, blink, breathing, a rotating animation | stock script; the two earlier attempts did not work, see below |
 | sysfs `/sys/class/leds/G` | adds green through the LP5562 driver; with red from the first path it gives orange and yellow | run and seen |
 
